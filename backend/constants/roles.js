@@ -1,0 +1,65 @@
+﻿const ROLES = {
+  ADMIN: 'Admin',
+  HR: 'HR',
+  ACCOUNTANT: 'Accountant',
+  EMPLOYEE: 'Employee'
+};
+
+const ALL_ROLES = Object.values(ROLES);
+
+const MODULES = {
+  DASHBOARD: 'dashboard',
+  EMPLOYEES: 'employees',
+  LEAVES: 'leaves',
+  ATTENDANCE: 'attendance',
+  INVENTORY: 'inventory',
+  CRM: 'crm',
+  SALES: 'sales',
+  FINANCE: 'finance',
+  TASKS: 'tasks',
+  DOCUMENTS: 'documents',
+  NOTIFICATIONS: 'notifications',
+  REPORTS: 'reports',
+  SETTINGS: 'settings'
+};
+
+const DEFAULT_ROLE_PERMISSIONS = {
+  [ROLES.ADMIN]: Object.values(MODULES),
+  [ROLES.HR]: [
+    MODULES.DASHBOARD,
+    MODULES.EMPLOYEES,
+    MODULES.LEAVES,
+    MODULES.ATTENDANCE,
+    MODULES.TASKS,
+    MODULES.DOCUMENTS,
+    MODULES.NOTIFICATIONS,
+    MODULES.REPORTS
+  ],
+  [ROLES.ACCOUNTANT]: [
+    MODULES.DASHBOARD,
+    MODULES.INVENTORY,
+    MODULES.CRM,
+    MODULES.SALES,
+    MODULES.FINANCE,
+    MODULES.TASKS,
+    MODULES.DOCUMENTS,
+    MODULES.NOTIFICATIONS,
+    MODULES.REPORTS
+  ],
+  [ROLES.EMPLOYEE]: [
+    MODULES.DASHBOARD,
+    MODULES.LEAVES,
+    MODULES.ATTENDANCE,
+    MODULES.TASKS,
+    MODULES.DOCUMENTS,
+    MODULES.NOTIFICATIONS
+  ]
+};
+
+module.exports = {
+  ROLES,
+  ALL_ROLES,
+  MODULES,
+  DEFAULT_ROLE_PERMISSIONS
+};
+
