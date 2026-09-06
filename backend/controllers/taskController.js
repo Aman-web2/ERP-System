@@ -1,4 +1,4 @@
-﻿const asyncHandler = require('express-async-handler');
+const asyncHandler = require('express-async-handler');
 const ProjectTask = require('../models/ProjectTask');
 const { validatePayload } = require('../utils/validate');
 const { taskSchemas } = require('../validators/schemas');
@@ -8,7 +8,8 @@ const { createNotification } = require('../services/notificationService');
 const taskPopulate = [
   { path: 'assignee', select: 'name avatar email employeeId' },
   { path: 'createdBy', select: 'name' },
-  { path: 'comments.author', select: 'name' }
+  { path: 'comments.author', select: 'name' },
+  { path: 'signedBy', select: 'name' }
 ];
 
 const getTasks = asyncHandler(async (req, res) => {
@@ -80,6 +81,18 @@ const updateTask = asyncHandler(async (req, res) => {
     throw new Error('Task not found');
   }
 
+  if (payload.status === 'Done' && task.status !== 'Done') {
+    if (!['Admin', 'HR'].includes(req.user.role)) {
+      res.status(403);
+      throw new Error('Only Admin and HR can mark tasks as Done');
+    }
+    task.signedBy = req.user._id;
+    task.signedAt = new Date();
+  } else if (payload.status && payload.status !== 'Done' && task.status === 'Done') {
+    task.signedBy = undefined;
+    task.signedAt = undefined;
+  }
+
   Object.assign(task, payload);
   await task.save();
 
@@ -109,6 +122,11 @@ const deleteTask = asyncHandler(async (req, res) => {
   if (!task) {
     res.status(404);
     throw new Error('Task not found');
+  }
+
+  if (!['Admin', 'HR'].includes(req.user.role)) {
+    res.status(403);
+    throw new Error('Only Admin and HR can delete tasks');
   }
 
   await task.deleteOne();

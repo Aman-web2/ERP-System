@@ -1,4 +1,4 @@
-﻿const asyncHandler = require('express-async-handler');
+const asyncHandler = require('express-async-handler');
 const User = require('../models/User');
 const Order = require('../models/Order');
 const Transaction = require('../models/Transaction');
@@ -19,7 +19,8 @@ const getDashboardSummary = asyncHandler(async (req, res) => {
     recentOrders,
     lowStockProducts,
     pendingLeaves,
-    attendanceToday
+    attendanceToday,
+    pendingUserApprovals
   ] = await Promise.all([
     User.find({ role: { $ne: 'Admin' } }).populate('department', 'name'),
     Transaction.find({ status: 'Completed' }),
@@ -33,7 +34,8 @@ const getDashboardSummary = asyncHandler(async (req, res) => {
       date: {
         $gte: new Date(new Date().setHours(0, 0, 0, 0))
       }
-    })
+    }),
+    User.find({ status: 'PendingApproval' }).select('name email createdAt').limit(5)
   ]);
 
   const revenue = transactions.filter((item) => item.type === 'Income').reduce((sum, item) => sum + item.amount, 0);
@@ -86,7 +88,8 @@ const getDashboardSummary = asyncHandler(async (req, res) => {
       notifications: notifications.length,
       lowStock: lowStockProducts.length,
       pendingLeaves: pendingLeaves.length,
-      attendanceToday: attendanceToday.length
+      attendanceToday: attendanceToday.length,
+      pendingApprovals: pendingUserApprovals.length
     },
     revenueData,
     departmentBreakdown: Object.entries(departmentBreakdownMap).map(([name, value]) => ({ name, value })),
@@ -96,7 +99,8 @@ const getDashboardSummary = asyncHandler(async (req, res) => {
     ],
     alerts: {
       lowStockProducts,
-      pendingLeaves
+      pendingLeaves,
+      pendingUserApprovals
     },
     recentActivities
   });

@@ -1,4 +1,4 @@
-﻿const mongoose = require('mongoose');
+const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema({
@@ -32,6 +32,11 @@ const userSchema = new mongoose.Schema({
   isActive: {
     type: Boolean,
     default: true
+  },
+  status: {
+    type: String,
+    enum: ['PendingDetails', 'PendingApproval', 'Active', 'Inactive'],
+    default: 'Active'
   },
   department: {
     type: mongoose.Schema.Types.ObjectId,

@@ -1,10 +1,11 @@
-﻿const asyncHandler = require('express-async-handler');
+const asyncHandler = require('express-async-handler');
 const User = require('../models/User');
 const { validatePayload } = require('../utils/validate');
 const { employeeSchemas } = require('../validators/schemas');
 const { sendPaginatedResponse, buildListOptions } = require('../utils/pagination');
 const { ROLES } = require('../constants/roles');
 const { createNotification } = require('../services/notificationService');
+const { logAction } = require('../services/auditService');
 
 const employeePopulate = [
   { path: 'department', select: 'name' },
@@ -56,6 +57,7 @@ const createEmployee = asyncHandler(async (req, res) => {
   }
 
   const employee = await User.create(payload);
+  await logAction('CREATE', 'Employee', employee._id, req.user._id, `Onboarded employee: ${employee.name}`);
   await createNotification({
     title: 'New employee onboarded',
     message: `${employee.name} joined as ${employee.role}.`,
@@ -97,6 +99,7 @@ const updateEmployee = asyncHandler(async (req, res) => {
 
   Object.assign(employee, payload);
   await employee.save();
+  await logAction('UPDATE', 'Employee', employee._id, req.user._id, `Updated profile for: ${employee.name}`);
 
   const updatedEmployee = await User.findById(req.params.id)
     .populate(employeePopulate)
@@ -118,7 +121,9 @@ const deleteEmployee = asyncHandler(async (req, res) => {
     throw new Error('Cannot delete admin user');
   }
 
+  const name = employee.name;
   await employee.deleteOne();
+  await logAction('DELETE', 'Employee', req.params.id, req.user._id, `Removed employee: ${name}`);
   res.json({ message: 'Employee removed' });
 });
 

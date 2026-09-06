@@ -1,4 +1,4 @@
-﻿const { Joi } = require('../utils/validate');
+const { Joi } = require('../utils/validate');
 const { ALL_ROLES } = require('../constants/roles');
 
 const objectId = Joi.string().length(24).hex();
@@ -24,6 +24,10 @@ const authSchemas = {
     email: emailField.required(),
     otp: Joi.string().length(6).required(),
     newPassword: Joi.string().min(6).max(128).required()
+  }),
+  completeProfile: Joi.object({
+    phone: Joi.string().required(),
+    address: Joi.string().min(5).required()
   })
 };
 
@@ -51,6 +55,7 @@ const employeeSchemas = {
     phone: Joi.string().allow('', null).optional(),
     avatar: Joi.string().uri().allow('', null).optional(),
     isActive: Joi.boolean().optional(),
+    status: Joi.string().valid('PendingDetails', 'PendingApproval', 'Active', 'Inactive').optional(),
     dateOfJoining: Joi.date().optional()
   })
 };

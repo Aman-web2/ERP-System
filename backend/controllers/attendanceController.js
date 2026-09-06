@@ -1,4 +1,4 @@
-﻿const asyncHandler = require('express-async-handler');
+const asyncHandler = require('express-async-handler');
 const Attendance = require('../models/Attendance');
 const { buildListOptions, sendPaginatedResponse } = require('../utils/pagination');
 
@@ -19,7 +19,7 @@ const clockIn = asyncHandler(async (req, res) => {
   attendance = attendance || new Attendance({ employee: req.user._id, date: new Date() });
   attendance.clockIn = new Date();
   attendance.status = 'Present';
-  attendance.notes = req.body.notes || attendance.notes;
+  attendance.notes = req.body?.notes || attendance.notes;
   await attendance.save();
 
   res.status(201).json(attendance);
@@ -45,7 +45,7 @@ const clockOut = asyncHandler(async (req, res) => {
   }
 
   attendance.clockOut = new Date();
-  if (req.body.notes) {
+  if (req.body?.notes) {
     attendance.notes = req.body.notes;
   }
   await attendance.save();

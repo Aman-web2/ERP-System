@@ -1,4 +1,4 @@
-﻿const crypto = require('crypto');
+const crypto = require('crypto');
 const asyncHandler = require('express-async-handler');
 const User = require('../models/User');
 const CompanySetting = require('../models/CompanySetting');
@@ -21,6 +21,7 @@ const serializeUser = async (user) => ({
   role: user.role,
   avatar: user.avatar,
   phone: user.phone,
+  status: user.status || 'Active',
   permissions: await getRolePermissions(user.role)
 });
 
@@ -34,11 +35,13 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 
   const existingUsers = await User.countDocuments();
-  const assignedRole = existingUsers === 0 ? (payload.role || ROLES.ADMIN) : ROLES.EMPLOYEE;
+  const assignedRole = payload.role || (existingUsers === 0 ? ROLES.ADMIN : ROLES.EMPLOYEE);
+  const initialStatus = existingUsers === 0 ? 'Active' : 'PendingDetails';
 
   const user = await User.create({
     ...payload,
-    role: assignedRole
+    role: assignedRole,
+    status: initialStatus
   });
 
   generateToken(res, user._id);
@@ -88,6 +91,7 @@ const getUserProfile = asyncHandler(async (req, res) => {
     designation: user.designation,
     salary: user.salary,
     isActive: user.isActive,
+    status: user.status || 'Active',
     dateOfJoining: user.dateOfJoining
   });
 });
@@ -116,6 +120,25 @@ const forgotPassword = asyncHandler(async (req, res) => {
     message: 'OTP sent successfully.',
     otp: process.env.NODE_ENV === 'production' ? undefined : otp
   });
+});
+
+const completeProfile = asyncHandler(async (req, res) => {
+  const payload = validatePayload(authSchemas.completeProfile, req.body);
+  const user = await User.findById(req.user._id);
+
+  if (!user) {
+    res.status(404);
+    throw new Error('User not found');
+  }
+
+  user.phone = payload.phone;
+  user.address = payload.address;
+  if (user.status === 'PendingDetails') {
+    user.status = 'PendingApproval';
+  }
+  await user.save();
+
+  res.json(await serializeUser(user));
 });
 
 const resetPassword = asyncHandler(async (req, res) => {
@@ -148,6 +171,7 @@ module.exports = {
   logoutUser,
   getUserProfile,
   forgotPassword,
-  resetPassword
+  resetPassword,
+  completeProfile
 };
 

@@ -1,4 +1,4 @@
-﻿const asyncHandler = require('express-async-handler');
+const asyncHandler = require('express-async-handler');
 const Product = require('../models/Product');
 const Category = require('../models/Category');
 const Supplier = require('../models/Supplier');
@@ -7,6 +7,7 @@ const { validatePayload } = require('../utils/validate');
 const { inventorySchemas } = require('../validators/schemas');
 const { buildListOptions, sendPaginatedResponse } = require('../utils/pagination');
 const { createNotification } = require('../services/notificationService');
+const { logAction } = require('../services/auditService');
 const { ROLES } = require('../constants/roles');
 
 const productPopulate = [
@@ -60,6 +61,7 @@ const getProducts = asyncHandler(async (req, res) => {
 const createProduct = asyncHandler(async (req, res) => {
   const payload = validatePayload(inventorySchemas.product, req.body);
   const product = await Product.create(payload);
+  await logAction('CREATE', 'Product', product._id, req.user._id, `Added new product: ${product.name}`);
 
   if (payload.quantity > 0) {
     await StockMovement.create({
@@ -88,6 +90,7 @@ const updateProduct = asyncHandler(async (req, res) => {
   const previousQuantity = product.quantity;
   Object.assign(product, payload);
   await product.save();
+  await logAction('UPDATE', 'Product', product._id, req.user._id, `Updated product details: ${product.name}`);
 
   const quantityDifference = product.quantity - previousQuantity;
   if (quantityDifference !== 0) {
@@ -112,7 +115,9 @@ const deleteProduct = asyncHandler(async (req, res) => {
     throw new Error('Product not found');
   }
 
+  const name = product.name;
   await product.deleteOne();
+  await logAction('DELETE', 'Product', req.params.id, req.user._id, `Removed product: ${name}`);
   res.json({ message: 'Product removed' });
 });
 
@@ -147,6 +152,7 @@ const adjustStock = asyncHandler(async (req, res) => {
   });
 
   await notifyIfLowStock(product, req.user._id);
+  await logAction('UPDATE', 'Product Stock', product._id, req.user._id, `Adjusted stock for ${product.name} (Type: ${payload.type}, Qty: ${payload.quantity})`);
 
   res.status(201).json({
     movement,
