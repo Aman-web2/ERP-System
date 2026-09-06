@@ -1,4 +1,4 @@
-﻿const toneMap = {
+const toneMap = {
   success: 'badge-success',
   warning: 'badge-warning',
   danger: 'badge-danger',
@@ -9,7 +9,7 @@
 const guessTone = (value = '') => {
   const normalized = String(value).toLowerCase();
   if (['paid', 'completed', 'delivered', 'approved', 'active', 'present', 'in stock', 'done'].includes(normalized)) return 'success';
-  if (['pending', 'processing', 'lead', 'in progress', 'in review', 'low stock'].includes(normalized)) return 'warning';
+  if (['pending', 'processing', 'lead', 'in progress', 'in review', 'low stock', 'pendingapproval', 'pendingdetails'].includes(normalized)) return 'warning';
   if (['failed', 'cancelled', 'rejected', 'inactive', 'out of stock'].includes(normalized)) return 'danger';
   return 'info';
 };

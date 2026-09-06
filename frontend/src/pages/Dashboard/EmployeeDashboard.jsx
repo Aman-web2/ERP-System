@@ -1,53 +1,98 @@
-﻿import { Clock, CheckSquare, Calendar, Bell } from 'lucide-react';
+import { Clock, CheckSquare, Calendar, Bell, ArrowUpRight, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import PageHeader from '../../components/ui/PageHeader';
+import MetricCard from '../../components/ui/MetricCard';
+import Panel from '../../components/ui/Panel';
 
-const EmployeeDashboard = () => {
+const EmployeeDashboard = ({ data }) => {
   const statCards = [
-    { title: 'My Active Tasks', value: 4, icon: <CheckSquare size={24} className="text-indigo-500" />, bg: 'bg-indigo-50' },
-    { title: 'My Pending Leaves', value: 1, icon: <Calendar size={24} className="text-orange-500" />, bg: 'bg-orange-50' },
-    { title: 'Hours Worked (Week)', value: '32h', icon: <Clock size={24} className="text-emerald-500" />, bg: 'bg-emerald-50' },
-    { title: 'New Announcements', value: 2, icon: <Bell size={24} className="text-blue-500" />, bg: 'bg-blue-50' },
+    { title: 'My Active Tasks', value: data?.stats?.pendingTasks || 0, icon: <CheckSquare size={20} />, tone: 'primary' },
+    { title: 'My Pending Leaves', value: data?.alerts?.pendingLeaves?.length || 0, icon: <Calendar size={20} />, tone: 'warning' },
+    { title: 'Hours Worked (Week)', value: '32h', icon: <Clock size={20} />, tone: 'success' },
+    { title: 'New Announcements', value: data?.stats?.notifications || 0, icon: <Bell size={20} />, tone: 'primary' },
   ];
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Employee Hub</h1>
-        <button className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-lg font-medium shadow-sm transition-colors flex items-center gap-2">
-          <Clock size={18} /> Clock In
-        </button>
-      </div>
+    <div className="space-y-6 pb-12">
+      <PageHeader 
+        title="Personal Workspace" 
+        description="Your individual performance metrics, schedule synchronization, and task pipeline."
+        actions={
+          <button className="primary-button h-11 px-8 text-[11px] font-bold uppercase tracking-widest flex items-center gap-2 group">
+            <Clock size={18} /> System Clock In
+          </button>
+        }
+      />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {statCards.map((card, idx) => (
-          <div key={idx} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col justify-between hover:shadow-md transition-shadow">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-sm font-medium text-gray-500 mb-1">{card.title}</p>
-                <h3 className="text-3xl font-bold text-gray-900">{card.value}</h3>
-              </div>
-              <div className={`p-3 rounded-xl ${card.bg}`}>{card.icon}</div>
-            </div>
-          </div>
+          <MetricCard 
+            key={idx}
+            label={card.title}
+            value={card.value}
+            icon={card.icon}
+            tone={card.tone}
+          />
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">My Actions</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <Link to="/tasks" className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex flex-col items-center justify-center gap-2 text-indigo-600 font-medium">
-              <CheckSquare size={24} /> View My Tasks
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+         <Panel 
+           title="Immediate Actions" 
+           subtitle="Quick access to primary operational modules."
+           className="lg:col-span-1"
+         >
+          <div className="grid grid-cols-1 gap-3">
+            <Link to="/tasks" className="p-4 rounded-xl border border-border bg-surface hover:border-primary/20 hover:bg-primary/5 transition-all flex items-center justify-between group">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                  <CheckSquare size={20} />
+                </div>
+                <span className="text-sm font-bold text-text uppercase tracking-tighter">My Task Queue</span>
+              </div>
+              <ArrowUpRight size={16} className="text-muted group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
             </Link>
-            <Link to="/leaves" className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex flex-col items-center justify-center gap-2 text-orange-600 font-medium">
-              <Calendar size={24} /> Apply for Leave
+            <Link to="/leaves" className="p-4 rounded-xl border border-border bg-surface hover:border-warning/20 hover:bg-warning/5 transition-all flex items-center justify-between group">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-warning/10 text-warning flex items-center justify-center">
+                  <Calendar size={20} />
+                </div>
+                <span className="text-sm font-bold text-text uppercase tracking-tighter">Leave Management</span>
+              </div>
+              <ArrowUpRight size={16} className="text-muted group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
             </Link>
           </div>
-        </div>
+        </Panel>
+
+        <Panel 
+          title="Performance Synchronization" 
+          subtitle="Recent system notifications and individual milestones."
+          className="lg:col-span-2"
+        >
+          <div className="space-y-4">
+            <div className="p-4 rounded-xl bg-surface-muted/30 border border-dashed border-border flex items-center gap-4">
+              <div className="h-10 w-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center border border-emerald-200">
+                <CheckCircle2 size={20} />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-bold text-text uppercase tracking-tighter">Onboarding Phase Complete</p>
+                <p className="text-[10px] font-bold text-muted uppercase mt-0.5 tracking-widest">System updated 2 hours ago</p>
+              </div>
+            </div>
+            <div className="p-4 rounded-xl bg-surface-muted/30 border border-dashed border-border flex items-center gap-4 opacity-60">
+              <div className="h-10 w-10 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center border border-amber-200">
+                <AlertCircle size={20} />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-bold text-text uppercase tracking-tighter">Compliance Review Pending</p>
+                <p className="text-[10px] font-bold text-muted uppercase mt-0.5 tracking-widest">Awaiting department verification</p>
+              </div>
+            </div>
+          </div>
+        </Panel>
       </div>
     </div>
   );
 };
 
 export default EmployeeDashboard;
-

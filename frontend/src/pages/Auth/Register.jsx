@@ -1,8 +1,10 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
-import { setCredentials } from '../../store/authSlice';
+import { Mail, Lock, User, Briefcase, ArrowRight } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../utils/axiosInstance';
+import { setCredentials } from '../../store/authSlice';
 
 const Register = () => {
   const dispatch = useDispatch();
@@ -21,81 +23,138 @@ const Register = () => {
     try {
       const { data } = await api.post('/auth/register', form);
       dispatch(setCredentials(data));
-      setSuccess('User created successfully. Redirecting to dashboard...');
-      setTimeout(() => navigate('/dashboard'), 900);
+      setSuccess('Account created successfully!');
+      setTimeout(() => navigate('/dashboard'), 1500);
     } catch (requestError) {
-      setError(requestError?.response?.data?.message || 'Unable to create user.');
+      setError(requestError?.response?.data?.message || 'Unable to create account.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="auth-shell">
-      <div className="auth-card space-y-8">
-        <div>
-          <p className="eyebrow">Bootstrap Access</p>
-          <h1 className="mt-3 text-3xl font-semibold text-[var(--text)]">Create an ERP user</h1>
-          <p className="mt-2 text-sm text-[var(--muted)]">
-            Public registration creates an Employee account after bootstrap. Admin or HR should create privileged users from the HR module.
-          </p>
+    <div className="min-h-screen flex items-center justify-center bg-[#f1f5f9] p-6">
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-[480px] bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden"
+      >
+        <div className="p-8 pb-0">
+          <div className="flex items-center gap-2 mb-8">
+            <div className="h-10 w-10 rounded-lg bg-primary flex items-center justify-center text-white font-bold text-xl">B</div>
+            <h2 className="text-xl font-bold tracking-tight text-slate-900">BizeeERP</h2>
+          </div>
+          
+          <h1 className="text-2xl font-bold text-slate-900">Create your account</h1>
+          <p className="mt-2 text-sm text-slate-500 font-medium">Join our enterprise network and start managing projects.</p>
         </div>
 
-        <form className="space-y-4" onSubmit={submitHandler}>
-          {error ? <div className="badge badge-danger w-full justify-center py-3">{error}</div> : null}
-          {success ? <div className="badge badge-success w-full justify-center py-3">{success}</div> : null}
+        <form className="p-8 space-y-4" onSubmit={submitHandler}>
+          <AnimatePresence mode="wait">
+            {error && (
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="bg-red-50 border border-red-100 text-red-600 text-xs font-semibold p-3 rounded-lg text-center"
+              >
+                {error}
+              </motion.div>
+            )}
+            {success && (
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="bg-green-50 border border-green-100 text-green-600 text-xs font-semibold p-3 rounded-lg text-center"
+              >
+                {success}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-          <div>
-            <label className="mb-2 block text-sm font-medium text-[var(--text)]">Full name</label>
-            <input
-              required
-              value={form.name}
-              onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
-              placeholder="Aarav Nair"
-            />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-700">Full Name</label>
+              <div className="relative group">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={16} />
+                <input
+                  required
+                  value={form.name}
+                  onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
+                  className="pl-10 h-10 text-sm focus:ring-2 focus:ring-primary/20"
+                  placeholder="John Doe"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-700">Role</label>
+              <div className="relative group">
+                <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors pointer-events-none" size={16} />
+                <select 
+                  value={form.role} 
+                  onChange={(event) => setForm((current) => ({ ...current, role: event.target.value }))}
+                  className="pl-10 h-10 text-sm focus:ring-2 focus:ring-primary/20 appearance-none bg-white cursor-pointer"
+                >
+                  <option value="Employee">Employee</option>
+                  <option value="HR">HR</option>
+                  <option value="Accountant">Accountant</option>
+                  <option value="Admin">Admin</option>
+                </select>
+              </div>
+            </div>
           </div>
 
-          <div>
-            <label className="mb-2 block text-sm font-medium text-[var(--text)]">Email</label>
-            <input
-              type="email"
-              required
-              value={form.email}
-              onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
-              placeholder="employee@erp.local"
-            />
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-700">Email Address</label>
+            <div className="relative group">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={16} />
+              <input
+                type="email"
+                required
+                value={form.email}
+                onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
+                className="pl-10 h-10 text-sm focus:ring-2 focus:ring-primary/20"
+                placeholder="name@company.com"
+              />
+            </div>
           </div>
 
-          <div>
-            <label className="mb-2 block text-sm font-medium text-[var(--text)]">Password</label>
-            <input
-              type="password"
-              required
-              value={form.password}
-              onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
-              placeholder="Minimum 6 characters"
-            />
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-700">Password</label>
+            <div className="relative group">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={16} />
+              <input
+                type="password"
+                required
+                value={form.password}
+                onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
+                className="pl-10 h-10 text-sm focus:ring-2 focus:ring-primary/20"
+                placeholder="••••••••"
+              />
+            </div>
           </div>
 
-          <div>
-            <label className="mb-2 block text-sm font-medium text-[var(--text)]">Requested role</label>
-            <select value={form.role} onChange={(event) => setForm((current) => ({ ...current, role: event.target.value }))}>
-              <option value="Employee">Employee</option>
-              <option value="HR">HR</option>
-              <option value="Accountant">Accountant</option>
-              <option value="Admin">Admin</option>
-            </select>
-          </div>
-
-          <button type="submit" disabled={loading} className="primary-button w-full">
-            {loading ? 'Creating account...' : 'Create account'}
+          <button 
+            type="submit" 
+            disabled={loading} 
+            className="primary-button w-full h-11 text-sm font-semibold shadow-lg shadow-primary/20 mt-2"
+          >
+            {loading ? 'Creating account...' : (
+              <span className="flex items-center justify-center gap-2">
+                Create Account <ArrowRight size={16} />
+              </span>
+            )}
           </button>
         </form>
 
-        <p className="text-sm text-[var(--muted)]">
-          Already have access? <Link to="/login" className="text-[var(--primary)]">Sign in</Link>
-        </p>
-      </div>
+        <div className="p-8 pt-0 text-center">
+          <p className="text-sm font-medium text-slate-500">
+            Already have an account? <Link to="/login" className="text-primary font-bold hover:underline">Sign In</Link>
+          </p>
+        </div>
+      </motion.div>
     </div>
   );
 };

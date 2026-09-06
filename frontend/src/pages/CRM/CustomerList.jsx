@@ -1,5 +1,5 @@
-﻿import { useEffect, useState } from 'react';
-import { Handshake, MessageSquarePlus, PlusCircle } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Handshake, MessageSquarePlus, PlusCircle, Search, Mail, Phone, Building2, MapPin, Star, ArrowRight, Clock } from 'lucide-react';
 import api from '../../utils/axiosInstance';
 import PageHeader from '../../components/ui/PageHeader';
 import Panel from '../../components/ui/Panel';
@@ -68,8 +68,12 @@ const CustomerList = () => {
     return () => clearTimeout(timer);
   }, [search]);
 
-  const activeCount = customers.filter((customer) => customer.status === 'Active').length;
-  const leadCount = customers.filter((customer) => customer.status === 'Lead').length;
+  const stats = useMemo(() => {
+    const total = customers.length;
+    const active = customers.filter(c => c.status === 'Active').length;
+    const leads = customers.filter(c => c.status === 'Lead').length;
+    return { total, active, leads };
+  }, [customers]);
 
   const saveCustomer = async (event) => {
     event.preventDefault();
@@ -87,45 +91,65 @@ const CustomerList = () => {
   };
 
   if (loading) {
-    return <LoadingState label="Loading CRM workspace..." />;
+    return <LoadingState label="Synchronizing CRM database..." />;
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-8">
       <PageHeader
-        title="CRM workspace"
-        description="Manage customer records, review purchase history, and capture customer feedback that informs follow-up actions."
-        actions={<button className="primary-button inline-flex items-center gap-2" onClick={() => setModalOpen(true)}><PlusCircle size={18} /> Add customer</button>}
+        title="Relationship Management"
+        description="Oversee customer engagements, track lifecycle status, and maintain satisfaction records."
+        actions={<button className="primary-button inline-flex items-center gap-2" onClick={() => setModalOpen(true)}><PlusCircle size={18} /> Add Customer</button>}
       />
 
       <div className="grid gap-4 md:grid-cols-3">
-        <MetricCard label="Customers on page" value={customers.length} icon={<Handshake size={20} />} tone="primary" />
-        <MetricCard label="Active customers" value={activeCount} icon={<Handshake size={20} />} tone="success" />
-        <MetricCard label="Leads on page" value={leadCount} icon={<MessageSquarePlus size={20} />} tone="warning" />
+        <MetricCard label="Current Reach" value={stats.total} icon={<Handshake size={20} />} tone="primary" />
+        <MetricCard label="Active Accounts" value={stats.active} icon={<Handshake size={20} />} tone="success" />
+        <MetricCard label="Qualified Leads" value={stats.leads} icon={<MessageSquarePlus size={20} />} tone="warning" />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <Panel title="Customer directory" subtitle={getPaginationText(pagination)} actions={<input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search customers" className="max-w-sm" />}>
+        <Panel 
+          title="Customer Directory" 
+          subtitle={getPaginationText(pagination)} 
+          actions={
+            <div className="relative group w-full max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted group-focus-within:text-primary transition-colors" size={16} />
+              <input 
+                value={search} 
+                onChange={(event) => setSearch(event.target.value)} 
+                placeholder="Search database..." 
+                className="pl-10 h-10 text-sm" 
+              />
+            </div>
+          }
+        >
           <div className="table-shell">
             <table>
               <thead>
                 <tr>
-                  <th>Customer</th>
-                  <th>Company</th>
+                  <th>Identity</th>
+                  <th>Affiliation</th>
                   <th>Status</th>
-                  <th>Phone</th>
+                  <th />
                 </tr>
               </thead>
               <tbody>
                 {customers.map((customer) => (
-                  <tr key={customer._id} onClick={() => fetchCustomerDetails(customer._id)} className="cursor-pointer">
+                  <tr 
+                    key={customer._id} 
+                    onClick={() => fetchCustomerDetails(customer._id)} 
+                    className={`cursor-pointer transition-colors ${selectedCustomer?._id === customer._id ? 'bg-primary/5' : ''}`}
+                  >
                     <td>
-                      <p className="font-medium text-[var(--text)]">{customer.name}</p>
-                      <p className="text-sm text-[var(--muted)]">{customer.email}</p>
+                      <p className="font-semibold text-text">{customer.name}</p>
+                      <p className="text-[11px] text-muted font-medium uppercase mt-0.5 tracking-tight">{customer.email}</p>
                     </td>
-                    <td>{customer.company || 'Independent'}</td>
+                    <td>
+                      <p className="text-sm font-medium text-text">{customer.company || 'Private Entity'}</p>
+                    </td>
                     <td><StatusBadge>{customer.status}</StatusBadge></td>
-                    <td>{customer.phone}</td>
+                    <td className="text-right pr-4"><ArrowRight size={14} className="inline text-muted" /></td>
                   </tr>
                 ))}
               </tbody>
@@ -134,82 +158,134 @@ const CustomerList = () => {
           <Pagination pagination={pagination} onPageChange={(nextPage) => { setPage(nextPage); fetchCustomers(nextPage, search); }} />
         </Panel>
 
-        <Panel title="Customer profile" subtitle="Purchase history and direct feedback.">
+        <Panel title="Customer Intelligence" subtitle="Deep dive into engagement metrics and history.">
           {selectedCustomer ? (
-            <div className="space-y-5">
-              <div>
-                <h3 className="text-2xl font-semibold text-[var(--text)]">{selectedCustomer.name}</h3>
-                <p className="mt-1 text-sm text-[var(--muted)]">{selectedCustomer.company || 'Independent'} • {selectedCustomer.email}</p>
-                <p className="mt-2 text-sm text-[var(--muted)]">Total spent: {formatCurrency(selectedCustomer.totalSpent || 0)}</p>
+            <div className="space-y-8">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h3 className="text-2xl font-bold text-text tracking-tight">{selectedCustomer.name}</h3>
+                  <div className="flex flex-wrap items-center gap-3 mt-2">
+                    <div className="flex items-center gap-1 text-[11px] font-bold text-muted uppercase">
+                      <Building2 size={12} /> {selectedCustomer.company || 'Independent'}
+                    </div>
+                    <div className="flex items-center gap-1 text-[11px] font-bold text-muted uppercase">
+                      <Mail size={12} /> {selectedCustomer.email}
+                    </div>
+                  </div>
+                </div>
+                <StatusBadge>{selectedCustomer.status}</StatusBadge>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 rounded-xl bg-surface-muted border border-border">
+                  <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Total Value</p>
+                  <p className="text-xl font-bold text-text mt-1">{formatCurrency(selectedCustomer.totalSpent || 0)}</p>
+                </div>
+                <div className="p-4 rounded-xl bg-surface-muted border border-border">
+                  <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Phone Record</p>
+                  <p className="text-sm font-bold text-text mt-1">{selectedCustomer.phone || '--'}</p>
+                </div>
               </div>
 
               <div>
-                <p className="stat-kicker">Purchase history</p>
-                <div className="mt-3 space-y-2">
+                <h4 className="text-[11px] font-bold text-text uppercase tracking-widest flex items-center gap-2 mb-4">
+                  <Clock size={12} className="text-primary" /> Engagement Timeline
+                </h4>
+                <div className="space-y-3">
                   {(selectedCustomer.purchaseHistory || []).map((order) => (
-                    <div key={order._id} className="rounded-2xl bg-[var(--surface-muted)] px-4 py-3">
-                      <div className="flex items-center justify-between gap-3">
+                    <div key={order._id} className="p-4 rounded-xl border border-border bg-surface hover:border-primary/30 transition-all">
+                      <div className="flex items-center justify-between">
                         <div>
-                          <p className="font-medium text-[var(--text)]">Order {order._id.slice(-6).toUpperCase()}</p>
-                          <p className="text-sm text-[var(--muted)]">{formatDate(order.createdAt)}</p>
+                          <p className="text-xs font-bold text-text uppercase">Order #{order._id.slice(-6).toUpperCase()}</p>
+                          <p className="text-[10px] text-muted font-medium mt-0.5">{formatDate(order.createdAt)}</p>
                         </div>
                         <div className="text-right">
-                          <StatusBadge>{order.status}</StatusBadge>
-                          <p className="mt-2 text-sm text-[var(--muted)]">{formatCurrency(order.totalAmount)}</p>
+                          <p className="text-sm font-bold text-text">{formatCurrency(order.totalAmount)}</p>
+                          <div className="mt-1"><StatusBadge>{order.status}</StatusBadge></div>
                         </div>
                       </div>
                     </div>
                   ))}
-                  {!selectedCustomer.purchaseHistory?.length ? <p className="text-sm text-[var(--muted)]">No purchases recorded.</p> : null}
+                  {!selectedCustomer.purchaseHistory?.length && (
+                    <p className="text-xs text-muted font-medium italic p-4 text-center border border-dashed border-border rounded-xl">No transaction history found.</p>
+                  )}
                 </div>
               </div>
 
               <div>
-                <p className="stat-kicker">Feedback</p>
-                <div className="mt-3 space-y-2">
+                <h4 className="text-[11px] font-bold text-text uppercase tracking-widest flex items-center gap-2 mb-4">
+                  <MessageSquarePlus size={12} className="text-primary" /> Satisfaction Logs
+                </h4>
+                <div className="space-y-3 mb-6">
                   {(selectedCustomer.feedback || []).map((feedback, index) => (
-                    <div key={`${feedback.comment}-${index}`} className="rounded-2xl border border-[var(--border)] px-4 py-3">
-                      <div className="flex items-center justify-between">
-                        <StatusBadge>{`${feedback.rating}/5`}</StatusBadge>
-                        <span className="text-xs text-[var(--muted)]">{formatDate(feedback.createdAt)}</span>
+                    <div key={index} className="p-4 rounded-xl border-l-4 border-l-primary bg-surface-muted">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex gap-0.5">
+                          {[...Array(5)].map((_, i) => (
+                            <Star key={i} size={10} className={i < feedback.rating ? 'fill-amber-400 text-amber-400' : 'text-slate-300'} />
+                          ))}
+                        </div>
+                        <span className="text-[10px] text-muted font-bold">{formatDate(feedback.createdAt)}</span>
                       </div>
-                      <p className="mt-2 text-sm text-[var(--text)]">{feedback.comment}</p>
+                      <p className="text-xs text-text leading-relaxed">{feedback.comment}</p>
                     </div>
                   ))}
                 </div>
-                <form className="mt-4 space-y-3" onSubmit={submitFeedback}>
-                  <select value={feedbackForm.rating} onChange={(event) => setFeedbackForm((current) => ({ ...current, rating: Number(event.target.value) }))}>
-                    {[5, 4, 3, 2, 1].map((rating) => <option key={rating} value={rating}>{rating} Stars</option>)}
-                  </select>
-                  <textarea rows="3" value={feedbackForm.comment} onChange={(event) => setFeedbackForm((current) => ({ ...current, comment: event.target.value }))} placeholder="Capture customer feedback" required />
-                  <button type="submit" className="primary-button">Save feedback</button>
+                
+                <form className="space-y-3 p-4 bg-surface-muted rounded-xl border border-border" onSubmit={submitFeedback}>
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] font-bold text-text uppercase tracking-widest">Log New Feedback</label>
+                    <select 
+                      className="w-24 h-8 text-[11px] font-bold"
+                      value={feedbackForm.rating} 
+                      onChange={(e) => setFeedbackForm(prev => ({ ...prev, rating: Number(e.target.value) }))}
+                    >
+                      {[5, 4, 3, 2, 1].map((r) => <option key={r} value={r}>{r} Stars</option>)}
+                    </select>
+                  </div>
+                  <textarea rows="3" value={feedbackForm.comment} onChange={(e) => setFeedbackForm(prev => ({ ...prev, comment: e.target.value }))} placeholder="Enter observation..." required className="text-sm bg-surface border-none focus:ring-1 focus:ring-primary" />
+                  <button type="submit" className="primary-button w-full h-10 text-xs font-bold uppercase tracking-widest">Post Log</button>
                 </form>
               </div>
             </div>
           ) : (
-            <p className="text-sm text-[var(--muted)]">Select a customer to inspect details.</p>
+            <div className="flex flex-col items-center justify-center h-64 text-center opacity-40">
+              <Handshake size={48} className="mb-4" />
+              <p className="text-sm font-medium">Select a profile from the directory<br/>to view detailed accounts.</p>
+            </div>
           )}
         </Panel>
       </div>
 
-      <Modal open={modalOpen} title="Add customer" onClose={() => setModalOpen(false)}>
+      <Modal open={modalOpen} title="Onboard New Customer" onClose={() => setModalOpen(false)} width="max-w-2xl">
         <form className="field-grid two" onSubmit={saveCustomer}>
-          <input value={customerForm.name} onChange={(event) => setCustomerForm((current) => ({ ...current, name: event.target.value }))} placeholder="Customer name" required />
-          <input type="email" value={customerForm.email} onChange={(event) => setCustomerForm((current) => ({ ...current, email: event.target.value }))} placeholder="Email" required />
-          <input value={customerForm.phone} onChange={(event) => setCustomerForm((current) => ({ ...current, phone: event.target.value }))} placeholder="Phone" required />
-          <input value={customerForm.company} onChange={(event) => setCustomerForm((current) => ({ ...current, company: event.target.value }))} placeholder="Company" />
-          <select value={customerForm.status} onChange={(event) => setCustomerForm((current) => ({ ...current, status: event.target.value }))}>
-            <option value="Active">Active</option>
-            <option value="Lead">Lead</option>
-            <option value="Inactive">Inactive</option>
-          </select>
-          <input value={customerForm.address.city} onChange={(event) => setCustomerForm((current) => ({ ...current, address: { ...current.address, city: event.target.value } }))} placeholder="City" />
-          <input value={customerForm.address.state} onChange={(event) => setCustomerForm((current) => ({ ...current, address: { ...current.address, state: event.target.value } }))} placeholder="State" />
-          <input value={customerForm.address.country} onChange={(event) => setCustomerForm((current) => ({ ...current, address: { ...current.address, country: event.target.value } }))} placeholder="Country" />
-          <textarea className="col-span-full" rows="4" value={customerForm.notes} onChange={(event) => setCustomerForm((current) => ({ ...current, notes: event.target.value }))} placeholder="Notes" />
-          <div className="col-span-full flex justify-end gap-3">
+          <div>
+            <label className="text-xs font-semibold text-text mb-1 block">Full Name / Primary Contact</label>
+            <input value={customerForm.name} onChange={(e) => setCustomerForm(prev => ({ ...prev, name: e.target.value }))} placeholder="e.g. John Doe" required />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-text mb-1 block">Email Address</label>
+            <input type="email" value={customerForm.email} onChange={(e) => setCustomerForm(prev => ({ ...prev, email: e.target.value }))} placeholder="john@example.com" required />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-text mb-1 block">Contact Number</label>
+            <input value={customerForm.phone} onChange={(e) => setCustomerForm(prev => ({ ...prev, phone: e.target.value }))} placeholder="+1..." required />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-text mb-1 block">Company / Organization</label>
+            <input value={customerForm.company} onChange={(e) => setCustomerForm(prev => ({ ...prev, company: e.target.value }))} placeholder="Acme Corp" />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-text mb-1 block">Account Status</label>
+            <select value={customerForm.status} onChange={(e) => setCustomerForm(prev => ({ ...prev, status: e.target.value }))}>
+              <option value="Active">Active Subscription</option>
+              <option value="Lead">Potential Lead</option>
+              <option value="Inactive">Dormant Account</option>
+            </select>
+          </div>
+          <div className="col-span-full pt-4 flex justify-end gap-3">
             <button type="button" className="ghost-button" onClick={() => setModalOpen(false)}>Cancel</button>
-            <button type="submit" className="primary-button">Save customer</button>
+            <button type="submit" className="primary-button px-8">Save Customer Profile</button>
           </div>
         </form>
       </Modal>

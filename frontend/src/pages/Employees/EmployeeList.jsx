@@ -1,9 +1,10 @@
-﻿import { useEffect, useMemo, useState } from 'react';
-import { Plus, Save, Trash2, UserPlus } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Plus, Save, Trash2, UserPlus, Search, Users, UserCheck, Coins } from 'lucide-react';
 import api from '../../utils/axiosInstance';
 import PageHeader from '../../components/ui/PageHeader';
 import Panel from '../../components/ui/Panel';
 import Modal from '../../components/ui/Modal';
+import MetricCard from '../../components/ui/MetricCard';
 import Pagination from '../../components/ui/Pagination';
 import LoadingState from '../../components/ui/LoadingState';
 import StatusBadge from '../../components/ui/StatusBadge';
@@ -18,6 +19,7 @@ const emptyEmployeeForm = {
   designation: '',
   salary: 0,
   phone: '',
+  status: 'Active',
 };
 
 const EmployeeList = () => {
@@ -97,6 +99,7 @@ const EmployeeList = () => {
       salary: employee.salary || 0,
       phone: employee.phone || '',
       isActive: employee.isActive,
+      status: employee.status || 'Active',
     });
     setModalOpen(true);
   };
@@ -152,31 +155,32 @@ const EmployeeList = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="HR workspace"
-        description="Manage employee records, departments, designations, and today’s attendance snapshot from one admin surface."
-        actions={<button className="primary-button inline-flex items-center gap-2" onClick={openCreateModal}><UserPlus size={18} /> Add employee</button>}
+        title="Employee Management"
+        description="View and manage employee records, organizational structure, and operational status."
+        actions={<button className="primary-button inline-flex items-center gap-2" onClick={openCreateModal}><UserPlus size={18} /> Add Employee</button>}
       />
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <Panel>
-          <p className="stat-kicker">Visible employees</p>
-          <p className="mt-3 text-3xl font-semibold text-[var(--text)]">{headcountStats.total}</p>
-        </Panel>
-        <Panel>
-          <p className="stat-kicker">Active employees</p>
-          <p className="mt-3 text-3xl font-semibold text-[var(--text)]">{headcountStats.active}</p>
-        </Panel>
-        <Panel>
-          <p className="stat-kicker">Visible payroll</p>
-          <p className="mt-3 text-3xl font-semibold text-[var(--text)]">{formatCurrency(headcountStats.payroll)}</p>
-        </Panel>
+        <MetricCard label="Total Staff" value={headcountStats.total} helper="Registered employees" icon={<Users size={20} />} tone="primary" />
+        <MetricCard label="Active Status" value={headcountStats.active} helper="Login enabled" icon={<UserCheck size={20} />} tone="success" />
+        <MetricCard label="Monthly Payroll" value={formatCurrency(headcountStats.payroll)} helper="Combined basic salary" icon={<Coins size={20} />} tone="warning" />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.4fr_0.8fr]">
         <Panel
-          title="Employee directory"
+          title="Employee Directory"
           subtitle={getPaginationText(pagination)}
-          actions={<input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by name, email, or employee ID" className="max-w-sm" />}
+          actions={
+            <div className="relative group w-full max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted group-focus-within:text-primary transition-colors" size={16} />
+              <input 
+                value={search} 
+                onChange={(event) => setSearch(event.target.value)} 
+                placeholder="Search staff, email or ID..." 
+                className="pl-10 h-10 text-sm" 
+              />
+            </div>
+          }
         >
           <div className="table-shell">
             <table>
@@ -204,7 +208,12 @@ const EmployeeList = () => {
                       <p className="text-sm text-[var(--muted)]">{employee.designation?.title || 'No designation'}</p>
                     </td>
                     <td>{formatCurrency(employee.salary)}</td>
-                    <td><StatusBadge>{employee.isActive ? 'Active' : 'Inactive'}</StatusBadge></td>
+                    <td>
+                      <StatusBadge>{employee.isActive ? 'Login Enabled' : 'Login Disabled'}</StatusBadge>
+                      <div className="mt-1">
+                        <StatusBadge>{employee.status || 'Active'}</StatusBadge>
+                      </div>
+                    </td>
                     <td>
                       <div className="flex justify-end gap-2">
                         <button className="secondary-button px-3 py-2" onClick={() => openEditModal(employee)}>
@@ -341,13 +350,24 @@ const EmployeeList = () => {
             <input value={employeeForm.phone} onChange={(event) => setEmployeeForm((current) => ({ ...current, phone: event.target.value }))} />
           </div>
           {editingEmployee ? (
-            <div>
-              <label className="mb-2 block text-sm font-medium text-[var(--text)]">Status</label>
-              <select value={String(employeeForm.isActive)} onChange={(event) => setEmployeeForm((current) => ({ ...current, isActive: event.target.value === 'true' }))}>
-                <option value="true">Active</option>
-                <option value="false">Inactive</option>
-              </select>
-            </div>
+            <>
+              <div>
+                <label className="mb-2 block text-sm font-medium text-[var(--text)]">Login Access</label>
+                <select value={String(employeeForm.isActive)} onChange={(event) => setEmployeeForm((current) => ({ ...current, isActive: event.target.value === 'true' }))}>
+                  <option value="true">Enabled</option>
+                  <option value="false">Disabled</option>
+                </select>
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium text-[var(--text)]">Onboarding Status</label>
+                <select value={employeeForm.status} onChange={(event) => setEmployeeForm((current) => ({ ...current, status: event.target.value }))}>
+                  <option value="PendingDetails">Pending Details</option>
+                  <option value="PendingApproval">Pending Approval</option>
+                  <option value="Active">Active</option>
+                  <option value="Inactive">Inactive</option>
+                </select>
+              </div>
+            </>
           ) : null}
           <div className="col-span-full flex justify-end gap-3 pt-3">
             <button type="button" className="ghost-button" onClick={() => setModalOpen(false)}>Cancel</button>
